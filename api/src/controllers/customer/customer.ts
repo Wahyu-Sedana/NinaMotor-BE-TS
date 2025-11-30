@@ -4,8 +4,61 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { LoginRequest, RegisterRequest } from "../../types/auth.types";
 import { ApiResponse } from "../../config/api_response";
+import { randomUUID } from "crypto";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret_key";
+
+export const register = async (
+  req: Request<{}, {}, RegisterRequest>,
+  res: Response<ApiResponse>
+) => {
+  try {
+    const { email, password, c_password, nama, no_telp } = req.body;
+
+    if (!email || !password || !nama) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, and password are required",
+      });
+    }
+    const existingUser = await prisma.tb_users.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+    if (password !== c_password) {
+      return res.status(400).json({
+        success: false,
+        message: "Password and Confirm Password do not match",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await prisma.tb_users.create({
+      data: {
+        id: randomUUID(),
+        nama,
+        email,
+        password: hashedPassword,
+        no_telp: no_telp,
+        role: "customer",
+      },
+    });
+    return res.status(200).json({
+      success: true,
+      message: "User registered successfully",
+    });
+  } catch (error) {
+    console.error("Registration error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 export const login = async (
   req: Request<{}, {}, LoginRequest>,
@@ -57,8 +110,3 @@ export const login = async (
     });
   }
 };
-
-export const register = async (
-  req: Request<{}, {}, RegisterRequest>,
-  res: Response<ApiResponse>
-) => {};

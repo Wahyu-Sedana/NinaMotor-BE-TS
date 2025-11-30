@@ -7,6 +7,7 @@ export interface RegisterRequest {
   nama: string;
   email: string;
   password: string;
-  cPassword: string;
-  noTelp: string;
+  c_password: string;
+  no_telp: string;
+  role: string;
 }
