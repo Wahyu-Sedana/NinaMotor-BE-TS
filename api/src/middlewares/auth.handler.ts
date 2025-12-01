@@ -19,7 +19,9 @@ export const authenticateToken = (
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ success: false, message: "Unauthorized" });
+    return res
+      .status(401)
+      .json({ status: 401, success: false, message: "Unauthorized" });
   }
 
   const token = authHeader.split(" ")[1];
@@ -29,8 +31,10 @@ export const authenticateToken = (
     req.user = decoded;
     next();
   } catch (error) {
-    return res
-      .status(403)
-      .json({ success: false, message: "Invalid or expired token" });
+    return res.status(403).json({
+      status: 403,
+      success: false,
+      message: "Invalid or expired token",
+    });
   }
 };

@@ -3,14 +3,32 @@ import prisma from "../../helpers/database";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { LoginRequest, RegisterRequest } from "../../types/auth.types";
-import { ApiResponse } from "../../config/api_response";
+import {
+  LoginResponse,
+  ProfileResponse,
+  RegisterResponse,
+} from "../../config/api_response";
 import { randomUUID } from "crypto";
+import { AuthRequest } from "../../middlewares/auth.handler";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret_key";
 
+export const getProfile = async (
+  req: AuthRequest,
+  res: Response<ProfileResponse>
+) => {
+  console.log(req.user);
+
+  return res.json({
+    success: true,
+    message: "Profile fetched successfully",
+    data: req.user,
+  });
+};
+
 export const register = async (
   req: Request<{}, {}, RegisterRequest>,
-  res: Response<ApiResponse>
+  res: Response<RegisterResponse>
 ) => {
   try {
     const { email, password, c_password, nama, no_telp } = req.body;
@@ -62,7 +80,7 @@ export const register = async (
 
 export const login = async (
   req: Request<{}, {}, LoginRequest>,
-  res: Response<ApiResponse>
+  res: Response<LoginResponse>
 ) => {
   try {
     const { email, password } = req.body;
@@ -92,14 +110,22 @@ export const login = async (
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "7d" }
+      {
+        id: user.id,
+        nama: user.nama,
+        email: user.email,
+        no_telp: user.no_telp,
+        role: user.role,
+      },
+      JWT_SECRET
     );
+
+    const { password: _, ...safeUser } = user;
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
+      data: safeUser,
       token,
     });
   } catch (error) {
